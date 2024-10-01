@@ -2,6 +2,8 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/spartanb312/bipbap/badge)](https://www.codefactor.io/repository/github/spartanb312/bipbap)
 
+This is a ready-to-use lightweight obfuscator without configuration and dependency requirements. Bipbap aims for those developers without obfuscation experience. It will automatically figure and exclude most in-jar dependencies and mixin classes. And its easy-to-use HardwareID authenticator injector will automatically insert authenticator in your jar.
+
 ## Usage
 
 In command lines:
