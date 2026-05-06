@@ -3,7 +3,7 @@ package net.spartanb312.bipbap.process.impls
 import net.spartanb312.bipbap.config.setting
 import net.spartanb312.bipbap.process.Transformer
 import net.spartanb312.bipbap.process.resource.NameGenerator
-import net.spartanb312.bipbap.process.resource.ResourceCache
+import net.spartanb312.bipbap.process.resource.WorkContext
 import net.spartanb312.bipbap.utils.*
 import net.spartanb312.bipbap.utils.logging.Logger
 import org.objectweb.asm.tree.ClassNode
@@ -24,11 +24,12 @@ object MembersRenamer : Transformer("MembersRenamer") {
 
     private val blackListFields = listOf("INSTANCE", "Companion")
 
-    override fun ResourceCache.transform() {
+    override fun WorkContext.transform() {
         Logger.info(" - Encrypting members...")
         var localCount = 0
         var fieldCount = 0
         var methodCount = 0
+        val nonExcluded = nonExcluded
         if (localVar) {
             nonExcluded.forEach { classNode ->
                 classNode.methods.forEach { methodNode ->
@@ -73,7 +74,7 @@ object MembersRenamer : Transformer("MembersRenamer") {
                 .filter { it.checkMixin }
                 .forEach { classNode ->
                     for (methodNode in classNode.methods) {
-                        if (!methodNode.isPrivate) continue
+                        if (!methodNode.isPrivate && !methodNode.isStatic) continue
                         if (!methodNode.checkMixin) continue
                         if (methodNode.isInitializer) continue
                         if (methodNode.isMainMethod) continue

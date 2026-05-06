@@ -3,7 +3,7 @@ package net.spartanb312.bipbap.process.impls
 import net.spartanb312.bipbap.config.setting
 import net.spartanb312.bipbap.process.Transformer
 import net.spartanb312.bipbap.process.impls.encrypt.StringEncryptor
-import net.spartanb312.bipbap.process.resource.ResourceCache
+import net.spartanb312.bipbap.process.resource.WorkContext
 import net.spartanb312.bipbap.utils.*
 import net.spartanb312.bipbap.utils.logging.Logger
 import org.objectweb.asm.Handle
@@ -26,7 +26,7 @@ object InvokeDynamics : Transformer("InvokeDynamics") {
     private val invokeVirtual by setting("InvokeVirtual", true)
     private val exclusion by setting("Exclusion", listOf())
 
-    override fun ResourceCache.transform() {
+    override fun WorkContext.transform() {
         Logger.info(" - Replacing invokes to InvokeDynamics...")
 
         var staticCount = 0

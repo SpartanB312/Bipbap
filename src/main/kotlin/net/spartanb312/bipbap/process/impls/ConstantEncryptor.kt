@@ -4,7 +4,7 @@ import net.spartanb312.bipbap.config.setting
 import net.spartanb312.bipbap.process.Transformer
 import net.spartanb312.bipbap.process.impls.encrypt.NumberEncryptor
 import net.spartanb312.bipbap.process.impls.encrypt.StringEncryptor
-import net.spartanb312.bipbap.process.resource.ResourceCache
+import net.spartanb312.bipbap.process.resource.WorkContext
 import net.spartanb312.bipbap.utils.*
 import net.spartanb312.bipbap.utils.logging.Logger
 import org.objectweb.asm.Opcodes
@@ -20,7 +20,7 @@ object ConstantEncryptor : Transformer("ConstantEncryptor") {
     private val string by setting("String", true)
     private val exclusion by setting("Exclusion", listOf())
 
-    override fun ResourceCache.transform() {
+    override fun WorkContext.transform() {
         Logger.info(" - Encrypting constants...")
         val companions = mutableMapOf<ClassNode, MutableList<ConstRef<*>>>()
         val filtered = nonExcluded.filter { it.name.notInList(exclusion) && it.checkMixin }

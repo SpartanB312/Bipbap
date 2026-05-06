@@ -2,7 +2,7 @@ package net.spartanb312.bipbap.process.impls
 
 import net.spartanb312.bipbap.config.setting
 import net.spartanb312.bipbap.process.Transformer
-import net.spartanb312.bipbap.process.resource.ResourceCache
+import net.spartanb312.bipbap.process.resource.WorkContext
 import net.spartanb312.bipbap.utils.*
 import net.spartanb312.bipbap.utils.logging.Logger
 import org.objectweb.asm.Opcodes
@@ -11,13 +11,14 @@ import org.objectweb.asm.tree.*
 object Miscellaneous : Transformer("Miscellaneous") {
 
     var crasher by setting("Crasher", false)
-    private val hideCode by setting("HideCode", true)
-    private val watermark by setting("Watermark", true)
+    var hideCode by setting("HideCode", true)
+    var watermark by setting("Watermark", true)
     private val watermarks by setting("Watermarks", listOf("PROTECTED BY EVERETT", "PROTECTED BY SPARTAN 1186"))
     private val exclusion by setting("Exclusion", listOf())
 
-    override fun ResourceCache.transform() {
+    override fun WorkContext.transform() {
         Logger.info(" - Miscellaneous transformers...")
+        val nonExcluded = nonExcluded
         if (hideCode) {
             val count = count {
                 nonExcluded.asSequence()
@@ -27,7 +28,7 @@ object Miscellaneous : Transformer("Miscellaneous") {
                         pushBridge(classNode)
                     }
             }.get()
-            Logger.info("    Hided $count members")
+            Logger.info("    Hid $count members")
         }
         if (crasher) {
             val count = count {

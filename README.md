@@ -8,13 +8,22 @@ This is a ready-to-use lightweight obfuscator without configuration and dependen
 
 In command lines:
 
+Open UI: java -jar bipbap.jar `-ui`
+
+Generate a config: java -jar bipbap.jar `-genconfig` `config`
+
+- `config` The config JSON file that will be generated
+
 Use your config: java -jar bipbap.jar `config`
 
 - `config` The specified config JSON file that will be used
 
-Use our presets: java -jar bipbap.jar `input.jar` `preset` `authentication`
+Use our presets: java -jar bipbap.jar `preset` `input.jar` `output.jar` `threads` `authentication`
 
 - `preset` (Optional) Select one preset in -low -mid -high. If no preset is selected, -low will be used
+- `input.jar` (Optional) The jar file that will be processed. If not specified, input.jar will be used
+- `output.jar` (Optional) The jar file that will be written. If input is specified but output is not, input-obf.jar will be used
+- `threads` (Optional) format: -mt:4. If not specified, one thread will be used. Use -mt or -mt:-1 to use all available processors
 - `authentication` (Optional) format: -auth=https://authentication.com
 
 ## Presets
