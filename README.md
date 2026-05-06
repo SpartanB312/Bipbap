@@ -2,93 +2,109 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/spartanb312/bipbap/badge)](https://www.codefactor.io/repository/github/spartanb312/bipbap)
 
-This is a ready-to-use lightweight obfuscator without configuration and dependency requirements. Bipbap aims for those developers without obfuscation experience. It will automatically figure and exclude most in-jar dependencies and mixin classes. And its easy-to-use HardwareID authenticator injector will automatically insert authenticator in your jar.
+Bipbap is a lightweight JVM obfuscator with ready-to-use presets, a Swing UI, JSON configuration support, and Android Gradle Plugin integration.
 
-## Usage
+It can be used as:
 
-In command lines:
+- a command line jar obfuscator
+- a desktop UI tool
+- an Android Gradle Plugin that runs before R8/ProGuard
 
-Open UI: java -jar bipbap.jar `-ui`
+## Highlights
 
-Generate a config: java -jar bipbap.jar `-genconfig` `config`
+- Presets for quick usage: `-low`, `-mid`, `-high`
+- JSON config generation and loading
+- Swing UI, launched by double-clicking the jar or using `-ui`
+- Android app/library obfuscation through the Android Gradle Plugin Variant API
+- ProGuard/R8-compatible Android mode enabled by default
+- Generated keep rules for Bipbap Android output
 
-- `config` The config JSON file that will be generated
+## Command Line Usage
 
-Use your config: java -jar bipbap.jar `config`
+Launch the UI:
 
-- `config` The specified config JSON file that will be used
-
-Use our presets: java -jar bipbap.jar `preset` `input.jar` `output.jar` `threads` `authentication`
-
-- `preset` (Optional) Select one preset in -low -mid -high. If no preset is selected, -low will be used
-- `input.jar` (Optional) The jar file that will be processed. If not specified, input.jar will be used
-- `output.jar` (Optional) The jar file that will be written. If input is specified but output is not, input-obf.jar will be used
-- `threads` (Optional) format: -mt:4. If not specified, one thread will be used. Use -mt or -mt:-1 to use all available processors
-- `authentication` (Optional) format: -auth=https://authentication.com
-
-## Android Gradle Plugin
-
-Apply Bipbap after the Android application or library plugin:
-
-```kotlin
-plugins {
-    id("com.android.application")
-    id("net.spartanb312.bipbap.android")
-}
-
-bipbap {
-    // Defaults to low.
-    preset.set("low")
-
-    // Use -1 for Runtime.availableProcessors().
-    threads.set(-1)
-
-    // Enabled by default. Disables Android-unsafe transformers.
-    safeMode.set(true)
-
-    // Enabled by default. Adds Bipbap keep rules and uses the ProGuard/R8-safe transform set.
-    proguardCompatible.set(true)
-
-    // Defaults to release only. Use emptyList() to transform all build types.
-    buildTypes.set(listOf("release"))
-}
+```shell
+java -jar bipbap.jar -ui
 ```
 
-The Android plugin transforms release project classes through the Android Gradle Plugin Variant API before R8/ProGuard. Safe mode and ProGuard compatibility are enabled by default and keep the default Android transform conservative: ConstantEncryptor and local variable renaming stay enabled, while HWIDAuthenticator, CodeOptimizer, InvokeDynamics, field/method renaming, and Miscellaneous are disabled.
+Launching without arguments also opens the UI:
 
-When `proguardCompatible` is enabled, the plugin also generates `build/generated/bipbap/proguard/bipbap-keep-rules.pro` and attaches it to enabled Android variants. The generated rule keeps Bipbap's `$Constants` classes intact so R8/ProGuard does not optimize away the constant encryption layer.
+```shell
+java -jar bipbap.jar
+```
+
+Generate a default config:
+
+```shell
+java -jar bipbap.jar -genconfig config.json
+```
+
+Run with a config:
+
+```shell
+java -jar bipbap.jar config.json
+```
+
+Run with a preset:
+
+```shell
+java -jar bipbap.jar -low
+java -jar bipbap.jar -mid input.jar
+java -jar bipbap.jar -high input.jar output.jar
+```
+
+Preset input/output defaults:
+
+| Command | Input | Output |
+|---------|-------|--------|
+| `-high` | `input.jar` | `output.jar` |
+| `-high input.jar` | `input.jar` | `input-obf.jar` |
+| `-high input.jar output.jar` | `input.jar` | `output.jar` |
+
+Additional CLI options:
+
+| Option | Description |
+|--------|-------------|
+| `-mt:4` | Use 4 worker threads |
+| `-mt` or `-mt:-1` | Use `Runtime.availableProcessors()` |
+| `-auth=https://example.com` | Configure HWID authentication endpoint |
+
+## Android Obfuscation
+
+Bipbap supports Android app/library obfuscation through its Gradle plugin. The plugin runs before R8/ProGuard, uses Android-safe defaults, and can generate keep rules for Bipbap's encrypted constant layer.
+
+See the full Android guide: [Android Gradle Plugin Usage](https://github.com/spartanb312/bipbap/blob/main/ANDROID.md).
 
 ## Presets
 
-| Preset  | Activated features                                                                              |
-|---------|-------------------------------------------------------------------------------------------------|
-| `-low`  | CodeOptimize, ConstEncrypt, Renamer(LocalVar), HideCode                                         |
-| `-mid`  | CodeOptimize, ConstEncrypt, Renamer(LocalVar, Field, Method), InvokeDynamics, HideCode          |
+| Preset | Activated features |
+|--------|--------------------|
+| `-low` | CodeOptimize, ConstEncrypt, Renamer(LocalVar), HideCode |
+| `-mid` | CodeOptimize, ConstEncrypt, Renamer(LocalVar, Field, Method), InvokeDynamics, HideCode |
 | `-high` | CodeOptimize, ConstEncrypt, Renamer(LocalVar, Field, Method), InvokeDynamics, Crasher, HideCode |
 
 ## Features
 
 ### Obfuscation
 
-* [X] HWIDAuthenticator
-* [X] FieldRename
-* [X] MethodRename
-* [X] LocalVarRename
-* [X] NumberEncrypt
-* [X] StringEncrypt
-* [X] InvokeDynamics
-* [X] CodeHider
-* [X] Watermark
-* [X] Crasher
+- [x] HWIDAuthenticator
+- [x] FieldRename
+- [x] MethodRename
+- [x] LocalVarRename
+- [x] NumberEncrypt
+- [x] StringEncrypt
+- [x] InvokeDynamics
+- [x] CodeHider
+- [x] Watermark
+- [x] Crasher
 
 ### Optimization
 
-* [X] RemoveSource
-* [X] RemoveInnerClass
-* [X] RemoveDeadCodes
-* [X] KotlinOptimize
+- [x] RemoveSource
+- [x] RemoveInnerClass
+- [x] RemoveDeadCodes
+- [x] KotlinOptimize
 
-## License: MIT
+## License
 
-This is a free and open source software under MIT license
-
+MIT License.
