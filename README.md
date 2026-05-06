@@ -26,6 +26,38 @@ Use our presets: java -jar bipbap.jar `preset` `input.jar` `output.jar` `threads
 - `threads` (Optional) format: -mt:4. If not specified, one thread will be used. Use -mt or -mt:-1 to use all available processors
 - `authentication` (Optional) format: -auth=https://authentication.com
 
+## Android Gradle Plugin
+
+Apply Bipbap after the Android application or library plugin:
+
+```kotlin
+plugins {
+    id("com.android.application")
+    id("net.spartanb312.bipbap.android")
+}
+
+bipbap {
+    // Defaults to low.
+    preset.set("low")
+
+    // Use -1 for Runtime.availableProcessors().
+    threads.set(-1)
+
+    // Enabled by default. Disables Android-unsafe transformers.
+    safeMode.set(true)
+
+    // Enabled by default. Adds Bipbap keep rules and uses the ProGuard/R8-safe transform set.
+    proguardCompatible.set(true)
+
+    // Defaults to release only. Use emptyList() to transform all build types.
+    buildTypes.set(listOf("release"))
+}
+```
+
+The Android plugin transforms release project classes through the Android Gradle Plugin Variant API before R8/ProGuard. Safe mode and ProGuard compatibility are enabled by default and keep the default Android transform conservative: ConstantEncryptor and local variable renaming stay enabled, while HWIDAuthenticator, CodeOptimizer, InvokeDynamics, field/method renaming, and Miscellaneous are disabled.
+
+When `proguardCompatible` is enabled, the plugin also generates `build/generated/bipbap/proguard/bipbap-keep-rules.pro` and attaches it to enabled Android variants. The generated rule keeps Bipbap's `$Constants` classes intact so R8/ProGuard does not optimize away the constant encryption layer.
+
 ## Presets
 
 | Preset  | Activated features                                                                              |

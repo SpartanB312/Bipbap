@@ -1,9 +1,11 @@
 plugins {
     java
+    `java-gradle-plugin`
     kotlin("jvm") version "1.9.21"
 }
 
 repositories {
+    google()
     mavenCentral()
     maven("https://repo1.maven.org/maven2/")
     maven("https://mvnrepository.com/artifact/")
@@ -12,6 +14,9 @@ repositories {
 val asmVersion = "9.7"
 
 val library: Configuration by configurations.creating
+configurations.implementation {
+    extendsFrom(library)
+}
 
 dependencies {
     //Kotlin
@@ -25,20 +30,30 @@ dependencies {
     //GSON
     library("com.google.code.gson:gson:2.10")
 
-    implementation(library)
+    //Gradle Plugin APIs
+    compileOnly("com.android.tools.build:gradle:8.1.4")
+}
+
+gradlePlugin {
+    plugins {
+        create("bipbapAndroid") {
+            id = "net.spartanb312.bipbap.android"
+            implementationClass = "net.spartanb312.bipbap.gradle.android.BipbapAndroidPlugin"
+        }
+    }
 }
 
 tasks {
 
     compileJava {
         options.encoding = "UTF-8"
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
     }
 
     compileKotlin {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = "11"
         }
     }
 

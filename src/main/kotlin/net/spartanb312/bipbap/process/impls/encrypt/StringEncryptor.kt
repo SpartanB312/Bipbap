@@ -9,7 +9,7 @@ object StringEncryptor {
 
     fun createDecryptMethod(methodName: String, key: Int): MethodNode = MethodNode(
         Opcodes.ASM9,
-        Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_BRIDGE,
+        Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
         methodName,
         "(Ljava/lang/String;)Ljava/lang/String;",
         null,
