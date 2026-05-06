@@ -82,7 +82,7 @@ object InvokeDynamics : Transformer("InvokeDynamics") {
         }
 
         nonExcluded.filter {
-            !it.isInterface && it.version >= Opcodes.V1_7 && it.name.notInList(exclusion) && it.checkMixin
+            !it.isInterface && it.version >= Opcodes.V1_7 && getPrevName(it.name).notInList(exclusion) && it.checkMixin
         }.forEach { classNode ->
             val bootstrapName = massiveString
             val decryptName = massiveString

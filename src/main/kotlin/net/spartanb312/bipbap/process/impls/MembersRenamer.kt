@@ -54,7 +54,7 @@ object MembersRenamer : Transformer("MembersRenamer") {
                 val name = NameGenerator.nextName()
                 val stack: Stack<ClassNode> = Stack()
                 stack.add(owner)
-                while (stack.size > 0) {
+                while (stack.isNotEmpty()) {
                     val classNode = stack.pop()
                     val key = classNode.name + "." + fieldNode.name
                     if (key.notInList(exclusion)) mappings[key] = name

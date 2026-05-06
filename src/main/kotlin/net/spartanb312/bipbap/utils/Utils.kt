@@ -24,6 +24,9 @@ fun getRandomString(length: Int): String {
 
 val massiveString = buildString { repeat(Short.MAX_VALUE.toInt() - 1) { append(" ") } }
 
+inline val String.splash get() = replace(".", "/")
+inline val String.dot get() = replace("/", ".")
+
 val (Collection<AnnotationNode>)?.checkMixin
     get() = this?.none { it.desc.startsWith("Lorg/spongepowered/asm/mixin") } ?: true
 val ClassNode.checkMixin get() = visibleAnnotations.checkMixin && invisibleAnnotations.checkMixin

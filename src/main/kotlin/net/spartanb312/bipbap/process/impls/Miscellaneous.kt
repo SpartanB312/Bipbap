@@ -22,7 +22,7 @@ object Miscellaneous : Transformer("Miscellaneous") {
         if (hideCode) {
             val count = count {
                 nonExcluded.asSequence()
-                    .filter { !it.isAnnotation && it.name.notInList(exclusion) && it.checkMixin }
+                    .filter { !it.isAnnotation && getPrevName(it.name).notInList(exclusion) && it.checkMixin }
                     .forEach { classNode ->
                         pushSynthetic(classNode)
                         pushBridge(classNode)
@@ -33,7 +33,7 @@ object Miscellaneous : Transformer("Miscellaneous") {
         if (crasher) {
             val count = count {
                 nonExcluded.asSequence()
-                    .filter { it.name.notInList(exclusion) && it.checkMixin }
+                    .filter { getPrevName(it.name).notInList(exclusion) && it.checkMixin }
                     .forEach { classNode ->
                         classNode.methods.forEach { methodNode ->
                             methodNode.signature = methodNode.signature.bigBrainSignature
@@ -50,7 +50,7 @@ object Miscellaneous : Transformer("Miscellaneous") {
         if (watermark) {
             val count = count {
                 nonExcluded.asSequence()
-                    .filter { !it.isInterface && it.name.notInList(exclusion) && it.checkMixin }
+                    .filter { !it.isInterface && getPrevName(it.name).notInList(exclusion) && it.checkMixin }
                     .forEach { classNode ->
                         classNode.fields = classNode.fields ?: arrayListOf()
                         val marker = watermarks.random()

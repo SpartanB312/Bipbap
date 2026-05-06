@@ -8,6 +8,7 @@ object Transformers : Collection<Transformer> by mutableListOf(
     CodeOptimizer,
     ConstantEncryptor,
     MembersRenamer,
+    ClassRenamer,
     InvokeDynamics,
     Miscellaneous
 ) {

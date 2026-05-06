@@ -1,5 +1,7 @@
 package net.spartanb312.bipbap.process.resource
 
+import com.google.gson.JsonObject
+import net.spartanb312.bipbap.config.Configs
 import net.spartanb312.bipbap.config.Configs.isExcluded
 import net.spartanb312.bipbap.config.Configs.shouldRemove
 import net.spartanb312.bipbap.utils.logging.Logger
@@ -24,6 +26,13 @@ class WorkContext(private val input: String, private val libs: List<String>) {
             addAll(classes.values)
             addAll(libraries.values)
         }
+
+    val mapping = mutableMapOf<String, String>()
+    val revMapping = mutableMapOf<String, String>()
+
+    fun getPrevName(obfName: String): String {
+        return revMapping.getOrDefault(obfName, obfName)
+    }
 
     fun readJar() {
         readInput()
@@ -135,7 +144,7 @@ class WorkContext(private val input: String, private val libs: List<String>) {
                 libraries[classNode.name] = classNode
             }
             classNode
-        } catch (ignore: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
