@@ -124,20 +124,22 @@ abstract class BipbapAndroidTransformTask : DefaultTask() {
         Configs.Settings.input = inputJar.absolutePath
         Configs.Settings.output = outputJar.absolutePath
         Configs.Settings.threads = threadCount
-        Configs.Settings.exclusions = Configs.Settings.exclusions + extraExclusions.get()
+        Configs.Settings.exclusions += extraExclusions.get()
         applyPreset(resolvePreset())
-        if (safeMode.get() || proguardCompatible.get()) {
-            CodeOptimizer.enabled = false
-            HWIDAuthenticator.enabled = false
-            InvokeDynamics.enabled = false
+
+        if (proguardCompatible.get() || safeMode.get()) {
+            // Disable member renamers
             MembersRenamer.field = false
             MembersRenamer.method = false
-            MembersRenamer.localVar = true
-            Miscellaneous.enabled = false
-            Miscellaneous.crasher = false
-            Miscellaneous.hideCode = false
-            Miscellaneous.watermark = false
         }
+        if (safeMode.get()) {
+            CodeOptimizer.enabled = false
+            Miscellaneous.enabled = false
+        }
+
+        Miscellaneous.crasher = false
+        HWIDAuthenticator.enabled = false
+        InvokeDynamics.enabled = false
     }
 
     private fun resolveThreads(): Int {
@@ -184,7 +186,8 @@ abstract class BipbapAndroidTransformTask : DefaultTask() {
                     root.walkTopDown()
                         .filter { it.isFile }
                         .forEach { file ->
-                            val entryName = root.toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/')
+                            val entryName =
+                                root.toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/')
                             output.putFile(entryName, file.readBytes(), seen)
                         }
                 }

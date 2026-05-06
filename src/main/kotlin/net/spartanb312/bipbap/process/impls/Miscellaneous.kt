@@ -13,7 +13,7 @@ object Miscellaneous : Transformer("Miscellaneous") {
     var crasher by setting("Crasher", false)
     var hideCode by setting("HideCode", true)
     var watermark by setting("Watermark", true)
-    private val watermarks by setting("Watermarks", listOf("PROTECTED BY EVERETT", "PROTECTED BY SPARTAN 1186"))
+    private val watermarks by setting("Watermarks", listOf("PROTECTED_BY_EVERETT", "PROTECTED_BY_SPARTAN_1186"))
     private val exclusion by setting("Exclusion", listOf())
 
     override fun WorkContext.transform() {
@@ -68,7 +68,7 @@ object Miscellaneous : Transformer("Miscellaneous") {
                             1 -> classNode.fields.add(
                                 FieldNode(
                                     Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
-                                    "_$marker _",
+                                    marker,
                                     "I",
                                     null,
                                     listOf(114514, 1919810, 69420, 911, 8964).random()
