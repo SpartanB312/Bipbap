@@ -108,15 +108,16 @@ fun main(args: Array<String>) {
 fun runInstance() {
     Transformers.resetTransformers()
     val time = measureTimeMillis {
-        WorkContext(Configs.Settings.input, Configs.Settings.libraries).apply {
-            readJar()
+        WorkContext(Configs.Settings.input, Configs.Settings.libraries).use { context ->
+            context.readJar()
             val obfTime = measureTimeMillis {
                 Logger.info("Processing...")
-                Transformers.forEach { if (it.enabled) with(it) { transform() } }
+                Transformers.forEach { if (it.enabled) with(it) { context.transform() } }
             }
             Logger.info("Took $obfTime ms to process!")
             Logger.info("Dumping to ${Configs.Settings.output}")
-        }.dumpJar(Configs.Settings.output)
+            context.dumpJar(Configs.Settings.output)
+        }
     }
     Logger.info("Finished in $time ms!")
 }

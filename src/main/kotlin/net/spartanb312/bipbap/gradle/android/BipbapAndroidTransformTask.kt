@@ -92,13 +92,13 @@ abstract class BipbapAndroidTransformTask : DefaultTask() {
             mergeInputs(inputJar)
             configureBipbap(inputJar, outputJar, threadCount)
 
-            val context = WorkContext(inputJar.absolutePath, emptyList()).apply {
-                readJar()
+            WorkContext(inputJar.absolutePath, emptyList()).use { context ->
+                context.readJar()
+                excludeAndroidGeneratedClasses(context)
+                Logger.info("Using Android Gradle plugin preset: ${preset.get().lowercase()}")
+                Transformers.forEach { if (it.enabled) with(it) { context.transform() } }
+                context.dumpJar(outputJar.absolutePath)
             }
-            excludeAndroidGeneratedClasses(context)
-            Logger.info("Using Android Gradle plugin preset: ${preset.get().lowercase()}")
-            Transformers.forEach { if (it.enabled) with(it) { context.transform() } }
-            context.dumpJar(outputJar.absolutePath)
         }
     }
 

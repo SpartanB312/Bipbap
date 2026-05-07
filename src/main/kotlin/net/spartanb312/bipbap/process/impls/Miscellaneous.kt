@@ -21,72 +21,72 @@ object Miscellaneous : Transformer("Miscellaneous") {
         val nonExcluded = nonExcluded
         if (hideCode) {
             val count = count {
-                nonExcluded.asSequence()
-                    .filter { !it.isAnnotation && getPrevName(it.name).notInList(exclusion) && it.checkMixin }
-                    .forEach { classNode ->
-                        pushSynthetic(classNode)
-                        pushBridge(classNode)
-                    }
+                parallelForEach(nonExcluded.filter {
+                    !it.isAnnotation && getPrevName(it.name).notInList(exclusion) && it.checkMixin
+                }) { classNode ->
+                    pushSynthetic(classNode)
+                    pushBridge(classNode)
+                }
             }.get()
             Logger.info("    Hid $count members")
         }
         if (crasher) {
             val count = count {
-                nonExcluded.asSequence()
-                    .filter { getPrevName(it.name).notInList(exclusion) && it.checkMixin }
-                    .forEach { classNode ->
-                        classNode.methods.forEach { methodNode ->
-                            methodNode.signature = methodNode.signature.bigBrainSignature
-                        }
-                        classNode.fields.forEach { fieldNode ->
-                            fieldNode.signature = fieldNode.signature.bigBrainSignature
-                        }
-                        classNode.signature = classNode.signature.bigBrainSignature
-                        add()
+                parallelForEach(nonExcluded.filter {
+                    getPrevName(it.name).notInList(exclusion) && it.checkMixin
+                }) { classNode ->
+                    classNode.methods.forEach { methodNode ->
+                        methodNode.signature = methodNode.signature.bigBrainSignature
                     }
+                    classNode.fields.forEach { fieldNode ->
+                        fieldNode.signature = fieldNode.signature.bigBrainSignature
+                    }
+                    classNode.signature = classNode.signature.bigBrainSignature
+                    add()
+                }
             }.get()
             Logger.info("    Inserted $count crashers")
         }
         if (watermark) {
             val count = count {
-                nonExcluded.asSequence()
-                    .filter { !it.isInterface && getPrevName(it.name).notInList(exclusion) && it.checkMixin }
-                    .forEach { classNode ->
-                        classNode.fields = classNode.fields ?: arrayListOf()
-                        val marker = watermarks.random()
-                        when ((0..2).random()) {
-                            0 -> classNode.fields.add(
-                                FieldNode(
-                                    Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
-                                    watermarks.random(),
-                                    "Ljava/lang/String;",
-                                    null,
-                                    marker
-                                )
+                parallelForEach(nonExcluded.filter {
+                    !it.isInterface && getPrevName(it.name).notInList(exclusion) && it.checkMixin
+                }) { classNode ->
+                    classNode.fields = classNode.fields ?: arrayListOf()
+                    val marker = watermarks.random()
+                    when ((0..2).random()) {
+                        0 -> classNode.fields.add(
+                            FieldNode(
+                                Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
+                                watermarks.random(),
+                                "Ljava/lang/String;",
+                                null,
+                                marker
                             )
+                        )
 
-                            1 -> classNode.fields.add(
-                                FieldNode(
-                                    Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
-                                    marker,
-                                    "I",
-                                    null,
-                                    listOf(114514, 1919810, 69420, 911, 8964).random()
-                                )
+                        1 -> classNode.fields.add(
+                            FieldNode(
+                                Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
+                                marker,
+                                "I",
+                                null,
+                                listOf(114514, 1919810, 69420, 911, 8964).random()
                             )
+                        )
 
-                            2 -> classNode.fields.add(
-                                FieldNode(
-                                    Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
-                                    watermarks.random(),
-                                    "Ljava/lang/String;",
-                                    null,
-                                    marker
-                                )
+                        2 -> classNode.fields.add(
+                            FieldNode(
+                                Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
+                                watermarks.random(),
+                                "Ljava/lang/String;",
+                                null,
+                                marker
                             )
-                        }
-                        add(1)
+                        )
                     }
+                    add(1)
+                }
             }.get()
             Logger.info("    Added $count watermarks")
         }

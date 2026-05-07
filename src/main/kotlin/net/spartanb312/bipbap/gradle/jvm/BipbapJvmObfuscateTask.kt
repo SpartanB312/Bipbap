@@ -87,12 +87,12 @@ abstract class BipbapJvmObfuscateTask : DefaultTask() {
             configureBipbap(input, output, threadCount, libraryFiles)
 
             output.parentFile.mkdirs()
-            val context = WorkContext(input.absolutePath, libraryFiles.map { it.absolutePath }).apply {
-                readJar()
+            WorkContext(input.absolutePath, libraryFiles.map { it.absolutePath }).use { context ->
+                context.readJar()
+                Logger.info("Using JVM Gradle plugin settings: ${settingsName()}")
+                Transformers.forEach { if (it.enabled) with(it) { context.transform() } }
+                context.dumpJar(output.absolutePath)
             }
-            Logger.info("Using JVM Gradle plugin settings: ${settingsName()}")
-            Transformers.forEach { if (it.enabled) with(it) { context.transform() } }
-            context.dumpJar(output.absolutePath)
         }
     }
 

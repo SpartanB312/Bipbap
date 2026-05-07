@@ -1,24 +1,30 @@
 package net.spartanb312.bipbap.process.resource
 
-import com.google.gson.JsonObject
 import net.spartanb312.bipbap.config.Configs
 import net.spartanb312.bipbap.config.Configs.isExcluded
 import net.spartanb312.bipbap.config.Configs.shouldRemove
+import net.spartanb312.bipbap.utils.ConcurrentWorker
 import net.spartanb312.bipbap.utils.logging.Logger
 import org.objectweb.asm.ClassReader
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.ClassNode
+import java.io.Closeable
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class WorkContext(private val input: String, private val libs: List<String>) {
+class WorkContext(
+    private val input: String,
+    private val libs: List<String>
+) : ConcurrentWorker(resolveThreadCount()), Closeable {
 
-    val classes = mutableMapOf<String, ClassNode>()
-    val libraries = mutableMapOf<String, ClassNode>()
-    val resources = mutableMapOf<String, ByteArray>()
+    val classes = ConcurrentHashMap<String, ClassNode>()
+    val libraries = ConcurrentHashMap<String, ClassNode>()
+    val resources = ConcurrentHashMap<String, ByteArray>()
 
     val nonExcluded get() = classes.filter { !it.key.isExcluded }.values
     val allClasses
@@ -43,8 +49,9 @@ class WorkContext(private val input: String, private val libs: List<String>) {
         Logger.info("Writing classes...")
         val hierarchy = Hierarchy(this@WorkContext)
         hierarchy.build()
-        for (classNode in classes.values) {
-            if (classNode.name == "module-info" || classNode.name.shouldRemove) continue
+        val bytes = ConcurrentHashMap<ZipEntry, ByteArray>()
+        parallelForEach(classes.values) { classNode ->
+            if (classNode.name == "module-info" || classNode.name.shouldRemove) return@parallelForEach
             val byteArray = try {
                 ClassDumper(this@WorkContext, hierarchy, true).apply {
                     classNode.accept(this)
@@ -52,13 +59,15 @@ class WorkContext(private val input: String, private val libs: List<String>) {
             } catch (exception: Exception) {
                 Logger.error("Failed to dump class ${classNode.name}.")
                 exception.printStackTrace()
-                continue
+                return@parallelForEach
             }
-            putNextEntry(ZipEntry(classNode.name + ".class"))
+            bytes[ZipEntry(classNode.name + ".class")] = byteArray
+        }
+        for ((entry, byteArray) in bytes) {
+            putNextEntry(entry)
             write(byteArray)
             closeEntry()
         }
-
         Logger.info("Writing resources...")
         for ((name, bytes) in resources) {
             if (name.shouldRemove) continue
@@ -150,7 +159,7 @@ class WorkContext(private val input: String, private val libs: List<String>) {
     }
 
     fun applyRemap(mappings: Map<String, String>) {
-        val remapper = SimpleRemapper(mappings)
+        val remapper = SimpleRemapper(Opcodes.ASM9, mappings)
         for ((name, node) in classes.toMutableMap()) {
             val copy = ClassNode()
             val adapter = ClassRemapper(copy, remapper)
@@ -159,4 +168,14 @@ class WorkContext(private val input: String, private val libs: List<String>) {
         }
     }
 
+    override fun close() {
+        cancelAndClose()
+    }
+
+}
+
+private fun resolveThreadCount(): Int {
+    val threads = Configs.Settings.threads
+    return if (threads == -1) Runtime.getRuntime().availableProcessors()
+    else threads.coerceAtLeast(1)
 }

@@ -9,6 +9,8 @@ import net.spartanb312.bipbap.utils.*
 import net.spartanb312.bipbap.utils.logging.Logger
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 object ConstantEncryptor : Transformer("ConstantEncryptor") {
@@ -22,7 +24,7 @@ object ConstantEncryptor : Transformer("ConstantEncryptor") {
 
     override fun WorkContext.transform() {
         Logger.info(" - Encrypting constants...")
-        val companions = mutableMapOf<ClassNode, MutableList<ConstRef<*>>>()
+        val companions = mutableMapOf<ClassNode, ConcurrentLinkedQueue<ConstRef<*>>>()
         val filtered = nonExcluded.filter { it.name.notInList(exclusion) && it.checkMixin }
         filtered.forEach {
             companions[
@@ -36,98 +38,97 @@ object ConstantEncryptor : Transformer("ConstantEncryptor") {
                         null
                     )
                 }
-            ] = mutableListOf()
+            ] = ConcurrentLinkedQueue()
         }
-        var intCount = 0
-        var longCount = 0
-        var floatCount = 0
-        var doubleCount = 0
-        var stringCount = 0
-        filtered.forEach { classNode ->
-            classNode.methods.forEach { methodNode ->
-                if (!methodNode.isAbstract && !methodNode.isNative) {
-                    val insnList = InsnList().apply {
-                        methodNode.instructions.forEach { insn ->
-                            if (insn is LdcInsnNode) {
-                                val owner = companions.keys.random()
-                                val list = companions[owner]!!
-                                val cst = insn.cst
-                                when {
-                                    cst is Int && integer -> ConstRef.IntRef(cst).let {
-                                        list.add(it)
-                                        add(
-                                            FieldInsnNode(
-                                                Opcodes.GETSTATIC,
-                                                owner.name,
-                                                it.field.name,
-                                                it.field.desc
-                                            )
-                                        )
-                                        intCount++
-                                    }
+        val intCount = AtomicInteger()
+        val longCount = AtomicInteger()
+        val floatCount = AtomicInteger()
+        val doubleCount = AtomicInteger()
+        val stringCount = AtomicInteger()
 
-                                    cst is Long && long -> ConstRef.LongRef(cst).let {
-                                        list.add(it)
-                                        add(
-                                            FieldInsnNode(
-                                                Opcodes.GETSTATIC,
-                                                owner.name,
-                                                it.field.name,
-                                                it.field.desc
-                                            )
-                                        )
-                                        longCount++
-                                    }
+        parallelForEach(filtered.flatMap { it.methods }.filter {
+            !it.isAbstract && !it.isNative
+        }) { methodNode ->
+            val insnList = InsnList().apply {
+                methodNode.instructions.forEach { insn ->
+                    if (insn is LdcInsnNode) {
+                        val owner = companions.keys.random()
+                        val queue = companions[owner]!!
+                        val cst = insn.cst
+                        when {
+                            cst is Int && integer -> ConstRef.IntRef(cst).let {
+                                queue.add(it)
+                                add(
+                                    FieldInsnNode(
+                                        Opcodes.GETSTATIC,
+                                        owner.name,
+                                        it.field.name,
+                                        it.field.desc
+                                    )
+                                )
+                                intCount.incrementAndGet()
+                            }
 
-                                    cst is Float && float -> ConstRef.FloatRef(cst).let {
-                                        list.add(it)
-                                        add(
-                                            FieldInsnNode(
-                                                Opcodes.GETSTATIC,
-                                                owner.name,
-                                                it.field.name,
-                                                it.field.desc
-                                            )
-                                        )
-                                        floatCount++
-                                    }
+                            cst is Long && long -> ConstRef.LongRef(cst).let {
+                                queue.add(it)
+                                add(
+                                    FieldInsnNode(
+                                        Opcodes.GETSTATIC,
+                                        owner.name,
+                                        it.field.name,
+                                        it.field.desc
+                                    )
+                                )
+                                longCount.incrementAndGet()
+                            }
 
-                                    cst is Double && double -> ConstRef.DoubleRef(cst).let {
-                                        list.add(it)
-                                        add(
-                                            FieldInsnNode(
-                                                Opcodes.GETSTATIC,
-                                                owner.name,
-                                                it.field.name,
-                                                it.field.desc
-                                            )
-                                        )
-                                        doubleCount++
-                                    }
+                            cst is Float && float -> ConstRef.FloatRef(cst).let {
+                                queue.add(it)
+                                add(
+                                    FieldInsnNode(
+                                        Opcodes.GETSTATIC,
+                                        owner.name,
+                                        it.field.name,
+                                        it.field.desc
+                                    )
+                                )
+                                floatCount.incrementAndGet()
+                            }
 
-                                    cst is String && string -> ConstRef.StringRef(cst).let {
-                                        list.add(it)
-                                        add(
-                                            FieldInsnNode(
-                                                Opcodes.GETSTATIC,
-                                                owner.name,
-                                                it.field.name,
-                                                it.field.desc
-                                            )
-                                        )
-                                        stringCount++
-                                    }
+                            cst is Double && double -> ConstRef.DoubleRef(cst).let {
+                                queue.add(it)
+                                add(
+                                    FieldInsnNode(
+                                        Opcodes.GETSTATIC,
+                                        owner.name,
+                                        it.field.name,
+                                        it.field.desc
+                                    )
+                                )
+                                doubleCount.incrementAndGet()
+                            }
 
-                                    else -> add(insn)
-                                }
-                            } else add(insn)
+                            cst is String && string -> ConstRef.StringRef(cst).let {
+                                queue.add(it)
+                                add(
+                                    FieldInsnNode(
+                                        Opcodes.GETSTATIC,
+                                        owner.name,
+                                        it.field.name,
+                                        it.field.desc
+                                    )
+                                )
+                                stringCount.incrementAndGet()
+                            }
+
+                            else -> add(insn)
                         }
-                    }
-                    methodNode.instructions = insnList
+                    } else add(insn)
                 }
             }
+            methodNode.instructions = insnList
         }
-        companions.forEach { (clazz, refList) ->
+        parallelForEach(companions.entries) { (clazz, refList) ->
             if (refList.isNotEmpty()) {
                 classes[clazz.name] = clazz
                 val clinit = MethodNode(
@@ -172,11 +173,11 @@ object ConstantEncryptor : Transformer("ConstantEncryptor") {
                 clazz.methods.add(clinit)
             }
         }
-        if (integer) Logger.info("    Encrypted $intCount integers")
-        if (long) Logger.info("    Encrypted $longCount longs")
-        if (float) Logger.info("    Encrypted $floatCount floats")
-        if (double) Logger.info("    Encrypted $doubleCount doubles")
-        if (string) Logger.info("    Encrypted $stringCount strings")
+        if (integer) Logger.info("    Encrypted ${intCount.get()} integers")
+        if (long) Logger.info("    Encrypted ${longCount.get()} longs")
+        if (float) Logger.info("    Encrypted ${floatCount.get()} floats")
+        if (double) Logger.info("    Encrypted ${doubleCount.get()} doubles")
+        if (string) Logger.info("    Encrypted ${stringCount.get()} strings")
     }
 
     interface ConstRef<T> {

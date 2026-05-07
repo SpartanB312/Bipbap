@@ -12,6 +12,7 @@ repositories {
 }
 
 val asmVersion = "9.9"
+val coroutinesVersion = "1.8.1"
 
 val library: Configuration by configurations.creating
 configurations.implementation {
@@ -21,6 +22,7 @@ configurations.implementation {
 dependencies {
     //Kotlin
     library(kotlin("stdlib"))
+    library("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
     //ASM
     library("org.ow2.asm:asm:$asmVersion")
