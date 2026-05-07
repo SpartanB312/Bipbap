@@ -8,6 +8,7 @@ It can be used as:
 
 - a command line jar obfuscator
 - a desktop UI tool
+- a JVM desktop application Gradle Plugin
 - an Android Gradle Plugin that runs before R8/ProGuard
 
 ## Highlights
@@ -15,6 +16,7 @@ It can be used as:
 - Presets for quick usage: `-low`, `-mid`, `-high`
 - JSON config generation and loading
 - Swing UI, launched by double-clicking the jar or using `-ui`
+- JVM desktop application obfuscation through Gradle
 - Android app/library obfuscation through the Android Gradle Plugin Variant API
 - ProGuard/R8-compatible Android mode enabled by default
 - Generated keep rules for Bipbap Android output
@@ -68,6 +70,12 @@ Additional CLI options:
 | `-mt:4` | Use 4 worker threads |
 | `-mt` or `-mt:-1` | Use `Runtime.availableProcessors()` |
 | `-auth=https://example.com` | Configure HWID authentication endpoint |
+
+## JVM Gradle Plugin
+
+Bipbap supports desktop Java/Kotlin JVM application obfuscation through its Gradle plugin. The plugin reads the project's `jar` output and writes a separate obfuscated jar without replacing the original artifact.
+
+See the full JVM Gradle guide: [JVM Gradle Plugin Usage](https://github.com/spartanb312/bipbap/blob/main/JVM.md).
 
 ## Android Obfuscation
 

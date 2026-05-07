@@ -12,7 +12,7 @@ import net.spartanb312.bipbap.utils.logging.Logger
 import kotlin.system.measureTimeMillis
 
 const val VERSION = "1.1.0"
-const val SUBTITLE = "build 260505"
+const val SUBTITLE = "build 260506"
 const val GITHUB = "https://github.com/SpartanB312/Bipbap"
 
 fun main(args: Array<String>) {

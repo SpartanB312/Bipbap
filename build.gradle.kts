@@ -11,7 +11,7 @@ repositories {
     maven("https://mvnrepository.com/artifact/")
 }
 
-val asmVersion = "9.7"
+val asmVersion = "9.9"
 
 val library: Configuration by configurations.creating
 configurations.implementation {
@@ -39,6 +39,10 @@ gradlePlugin {
         create("bipbapAndroid") {
             id = "net.spartanb312.bipbap.android"
             implementationClass = "net.spartanb312.bipbap.gradle.android.BipbapAndroidPlugin"
+        }
+        create("bipbapJvm") {
+            id = "net.spartanb312.bipbap.jvm"
+            implementationClass = "net.spartanb312.bipbap.gradle.jvm.BipbapJvmPlugin"
         }
     }
 }
