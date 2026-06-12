@@ -35,6 +35,7 @@ class WorkContext(
 
     val mapping = mutableMapOf<String, String>()
     val revMapping = mutableMapOf<String, String>()
+    var computeFrames = false
 
     fun getPrevName(obfName: String): String {
         return revMapping.getOrDefault(obfName, obfName)
@@ -53,13 +54,15 @@ class WorkContext(
         parallelForEach(classes.values) { classNode ->
             if (classNode.name == "module-info" || classNode.name.shouldRemove) return@parallelForEach
             val byteArray = try {
-                ClassDumper(this@WorkContext, hierarchy, true).apply {
+                ClassDumper(this@WorkContext, hierarchy, computeFrames).apply {
                     classNode.accept(this)
                 }.toByteArray()
             } catch (exception: Exception) {
                 Logger.error("Failed to dump class ${classNode.name}.")
                 exception.printStackTrace()
-                return@parallelForEach
+                if (computeFrames) ClassDumper(this@WorkContext, hierarchy, false).apply {
+                    classNode.accept(this)
+                }.toByteArray() else return@parallelForEach
             }
             bytes[ZipEntry(classNode.name + ".class")] = byteArray
         }

@@ -7,8 +7,8 @@ import org.objectweb.asm.ClassWriter
 class ClassDumper(
     private val context: WorkContext,
     private val hierarchy: Hierarchy,
-    useComputeMax: Boolean = false
-) : ClassWriter(if (useComputeMax) COMPUTE_MAXS else COMPUTE_FRAMES) {
+    computeFrames: Boolean = true
+) : ClassWriter(if (computeFrames) COMPUTE_FRAMES else COMPUTE_MAXS) {
 
     override fun getCommonSuperClass(type1: String, type2: String): String {
         return when {
@@ -21,22 +21,7 @@ class ClassDumper(
                 val clazz1 = context.getClassNode(type1)
                 val clazz2 = context.getClassNode(type2)
                 if (clazz1?.isInterface == true || clazz2?.isInterface == true) return "java/lang/Object"
-                //else {
-                //    // search lca
-                //    var info1 = hierarchy.findClassInfo(type1)
-                //    val info2 = hierarchy.findClassInfo(type2)
-                //    if (info1 != null && info2 != null) {
-                //        do {
-                //            val info1Super = info1?.superName
-                //            if (info1Super != null) {
-                //                val info1SuperC = hierarchy.findClassInfo(info1Super)
-                //                if (info1SuperC != null) info1 = info1SuperC
-                //                else break
-                //            } else break
-                //        } while (!hierarchy.isSubType(info2, info1))
-                //        if (info1 != null) return info1.name
-                //    }
-                //}
+                hierarchy.findLeastCommonAncestor(type1, type2)?.let { return it }
                 // fallback
                 try {
                     super.getCommonSuperClass(type1, type2)
@@ -63,4 +48,36 @@ class ClassDumper(
         }
     }
 
+}
+
+private fun Hierarchy.findLeastCommonAncestor(type1: String, type2: String): String? {
+    var current = findOrBuildClassInfo(type1) ?: return null
+    if (findOrBuildClassInfo(type2) == null) return null
+    val visited = mutableSetOf<String>()
+    while (visited.add(current.name)) {
+        if (isClassSubType(type2, current.name)) return current.name
+        val superName = current.superName ?: return null
+        current = findOrBuildClassInfo(superName) ?: return null
+    }
+    return null
+}
+
+private fun Hierarchy.isClassSubType(child: String, father: String): Boolean {
+    if (child == father || father == "java/lang/Object") return true
+    var current = findOrBuildClassInfo(child) ?: return false
+    val visited = mutableSetOf<String>()
+    while (visited.add(current.name)) {
+        val superName = current.superName ?: return false
+        if (superName == father) return true
+        current = findOrBuildClassInfo(superName) ?: return false
+    }
+    return false
+}
+
+private fun Hierarchy.findOrBuildClassInfo(name: String): Hierarchy.ClassInfo? {
+    return try {
+        findClassInfo(name) ?: getClassInfo(name)
+    } catch (_: Throwable) {
+        null
+    }
 }

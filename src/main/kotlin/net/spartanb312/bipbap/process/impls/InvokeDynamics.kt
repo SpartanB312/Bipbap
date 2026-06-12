@@ -3,6 +3,7 @@ package net.spartanb312.bipbap.process.impls
 import net.spartanb312.bipbap.config.setting
 import net.spartanb312.bipbap.process.Transformer
 import net.spartanb312.bipbap.process.impls.encrypt.StringEncryptor
+import net.spartanb312.bipbap.process.impls.flow.MethodFlattener
 import net.spartanb312.bipbap.process.resource.WorkContext
 import net.spartanb312.bipbap.utils.*
 import net.spartanb312.bipbap.utils.logging.Logger
@@ -24,6 +25,7 @@ object InvokeDynamics : Transformer("InvokeDynamics") {
     private val rate by setting("ReplacePercentage", 30)
     private val invokeStatic by setting("InvokeStatic", true)
     private val invokeVirtual by setting("InvokeVirtual", true)
+    private val reobf by setting("Reobf", true)
     private val exclusion by setting("Exclusion", listOf())
 
     override fun WorkContext.transform() {
@@ -90,6 +92,13 @@ object InvokeDynamics : Transformer("InvokeDynamics") {
             if (shouldApply(classNode, bootstrapName, decryptValue)) {
                 val decrypt = StringEncryptor.createDecryptMethod(decryptName, decryptValue)
                 val bsm = createBootstrap(classNode.name, bootstrapName, decryptName)
+                if (reobf) {
+                    val flattener = MethodFlattener(this, classNode, 3)
+                    flattener.flatten(decrypt)
+                    flattener.flatten(bsm)
+                    decrypt.localVariables.clear()
+                    bsm.localVariables.clear()
+                }
                 classNode.methods.add(decrypt)
                 classNode.methods.add(bsm)
             }
