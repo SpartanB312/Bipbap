@@ -1,8 +1,8 @@
 package net.spartanb312.bipbap.process.impls.flow
 
-import groovyjarjarasm.asm.Opcodes
 import net.spartanb312.bipbap.process.resource.WorkContext
 import net.spartanb312.bipbap.utils.toInsnNode
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FrameNode
 import org.objectweb.asm.tree.InsnList
@@ -16,6 +16,7 @@ import org.objectweb.asm.tree.TableSwitchInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 import org.objectweb.asm.tree.analysis.Analyzer
+import kotlin.random.Random
 
 class MethodFlattener(
     private val context: WorkContext,
@@ -43,14 +44,13 @@ class MethodFlattener(
 
     private fun applyFlattening(methodNode: MethodNode, graph: ControlFlowGraph) {
         val stateLocal = methodNode.maxLocals
-        val states = graph.blocks.mapIndexed { index, block -> block to index }.toMap()
+        val states = createStateKeys(graph.blocks)
         val caseLabels = graph.blocks.associateWith { LabelNode() }
         val dispatcher = LabelNode()
         val defaultCase = LabelNode()
         val flattened = InsnList()
 
-        flattened.add(states.getValue(graph.entry).toInsnNode())
-        flattened.add(VarInsnNode(Opcodes.ISTORE, stateLocal))
+        flattened.setState(states.getValue(graph.entry), stateLocal)
         flattened.add(JumpInsnNode(Opcodes.GOTO, dispatcher))
 
         graph.blocks.forEach { block ->
@@ -182,9 +182,69 @@ class MethodFlattener(
     }
 
     private fun InsnList.setStateAndJump(state: Int, stateLocal: Int, dispatcher: LabelNode) {
-        add(state.toInsnNode())
-        add(VarInsnNode(Opcodes.ISTORE, stateLocal))
+        setState(state, stateLocal)
         add(JumpInsnNode(Opcodes.GOTO, dispatcher))
+    }
+
+    private fun InsnList.setState(state: Int, stateLocal: Int) {
+        addStateExpression(state)
+        add(VarInsnNode(Opcodes.ISTORE, stateLocal))
+    }
+
+    private fun InsnList.addStateExpression(state: Int) {
+        when (Random.nextInt(5)) {
+            0 -> {
+                val mask = Random.nextInt()
+                add((state xor mask).toInsnNode())
+                add(mask.toInsnNode())
+                add(InsnNode(Opcodes.IXOR))
+            }
+
+            1 -> {
+                val delta = Random.nextInt()
+                add((state - delta).toInsnNode())
+                add(delta.toInsnNode())
+                add(InsnNode(Opcodes.IADD))
+            }
+
+            2 -> {
+                val delta = Random.nextInt()
+                add((state + delta).toInsnNode())
+                add(delta.toInsnNode())
+                add(InsnNode(Opcodes.ISUB))
+            }
+
+            3 -> {
+                val mask = Random.nextInt()
+                val delta = Random.nextInt()
+                add(((state xor mask) - delta).toInsnNode())
+                add(delta.toInsnNode())
+                add(InsnNode(Opcodes.IADD))
+                add(mask.toInsnNode())
+                add(InsnNode(Opcodes.IXOR))
+            }
+
+            else -> {
+                val mask = Random.nextInt()
+                val delta = Random.nextInt()
+                add(((state + delta) xor mask).toInsnNode())
+                add(mask.toInsnNode())
+                add(InsnNode(Opcodes.IXOR))
+                add(delta.toInsnNode())
+                add(InsnNode(Opcodes.ISUB))
+            }
+        }
+    }
+
+    private fun createStateKeys(blocks: List<Block>): Map<Block, Int> {
+        val used = mutableSetOf<Int>()
+        return blocks.associateWith {
+            var key: Int
+            do {
+                key = Random.nextInt()
+            } while (!used.add(key))
+            key
+        }
     }
 
     private fun validate(methodNode: MethodNode): Boolean {

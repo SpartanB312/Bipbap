@@ -2,6 +2,7 @@ package net.spartanb312.bipbap.process.impls
 
 import net.spartanb312.bipbap.config.setting
 import net.spartanb312.bipbap.process.Transformer
+import net.spartanb312.bipbap.process.impls.encrypt.NumberEncryptor
 import net.spartanb312.bipbap.process.impls.encrypt.StringEncryptor
 import net.spartanb312.bipbap.process.impls.flow.MethodFlattener
 import net.spartanb312.bipbap.process.resource.WorkContext
@@ -93,9 +94,10 @@ object InvokeDynamics : Transformer("InvokeDynamics") {
                 val decrypt = StringEncryptor.createDecryptMethod(decryptName, decryptValue)
                 val bsm = createBootstrap(classNode.name, bootstrapName, decryptName)
                 if (reobf) {
-                    val flattener = MethodFlattener(this, classNode, 3)
-                    flattener.flatten(decrypt)
-                    flattener.flatten(bsm)
+                    // TODO: CFF for bsm/decrypt
+                    //val flattener = MethodFlattener(this, classNode, 2)
+                    //flattener.flatten(decrypt)
+                    //flattener.flatten(bsm)
                     decrypt.localVariables.clear()
                     bsm.localVariables.clear()
                 }

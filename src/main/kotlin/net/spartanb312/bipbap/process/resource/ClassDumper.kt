@@ -22,6 +22,7 @@ class ClassDumper(
                 val clazz2 = context.getClassNode(type2)
                 if (clazz1?.isInterface == true || clazz2?.isInterface == true) return "java/lang/Object"
                 hierarchy.findLeastCommonAncestor(type1, type2)?.let { return it }
+                if (clazz1 != null && clazz2 != null) return "java/lang/Object"
                 // fallback
                 try {
                     super.getCommonSuperClass(type1, type2)
